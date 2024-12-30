@@ -146,6 +146,185 @@ Click on "showmore" next to "jenkins." You will see a link. Open the link in new
 ![Screenshot (216)](https://github.com/user-attachments/assets/0220a61c-a72e-4dbf-a2b9-a10125836ad6)
 
 --------------------------------
+ Install Grafana
+------------------------------------------------------------
+You are currently in /etc/Prometheus path.
+
+Install Grafana on Monitoring Server;
+
+Step 1: Install Dependencies:
+First, ensure that all necessary dependencies are installed:
+sudo apt-get update
+sudo apt-get install -y apt-transport-https software-properties-common
+
+Step 2: Add the GPG Key:
+cd ---> You are now in ~ path
+Add the GPG key for Grafana:
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+
+You should see OK when executed the above command.
+
+Step 3: Add Grafana Repository:
+Add the repository for Grafana stable releases:
+echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+
+Step 4: Update and Install Grafana:
+Update the package list and install Grafana:
+sudo apt-get update
+sudo apt-get -y install grafana
+
+Step 5: Enable and Start Grafana Service:
+To automatically start Grafana after a reboot, enable the service:
+sudo systemctl enable grafana-server
+
+Start Grafana:
+sudo systemctl start grafana-server
+
+Step 6: Check Grafana Status:
+Verify the status of the Grafana service to ensure it's running correctly:
+sudo systemctl status grafana-server
+
+You should see "Active (running)" in green colour
+Press control+c to come out
+
+Step 7: Access Grafana Web Interface:
+The default port for Grafana is 3000
+http://<monitoring-server-ip>:3000
+![Screenshot (218)](https://github.com/user-attachments/assets/480ebd2c-3ffd-4c08-a035-320b616204c0)
+You will see the Grafana dashboard.
+![Screenshot (220)](https://github.com/user-attachments/assets/aaca026e-9fff-4dd5-b1fd-4e0918a9d0fc)
+
+
+The first thing that we have to do in Grafana is to add the data source
+Lets add the data source;
+
+
+Click on Dashboards in the left pane, you can see both the dashboards you have just added.
+
+![Screenshot (221)](https://github.com/user-attachments/assets/e32de29e-027a-479b-9d1f-b90ce445e9aa)
+
+To verify the cluster creation ---> Goto Cloud Formation service in AWS ----> You should see a stack got created with the name "kastrocluster". Make sure in the vs code editor the cluster will get created. As said earlier it will take atleast 20 minutes.
+Once the cluster is ready, you will see "EKS Cluster "kastrocluster" in "us-east-1" region is ready" in vs code editor. wait till you see this.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Get List of clusters
+eksctl get cluster
+Step 02: Create & Associate IAM OIDC Provider for our EKS Cluster
+To enable and use AWS IAM roles for Kubernetes service accounts on our EKS cluster, we must create & associate OIDC identity provider.
+To do so using eksctl we can use the below commands.
+
+# Template
+eksctl utils associate-iam-oidc-provider \
+    --region region-code \
+    --cluster <cluster-name> \
+    --approve
+
+Step 03: Create Node Group with additional Add-Ons in Public Subnets
+These add-ons will create the respective IAM policies for us automatically within our Node Group role.
+Step 05: Verify Cluster & Nodes
+Goto EKS Service in AWS and cLet us deploy the same application in the EKS cluster also
+heck for the cluster creation
+
+15.6: Argo CD installation
+------------------------------------------------------------
+
+Inorder to monitor k8s with Prometheus, we need to install ArgoCD. Lets do that
+Execute the below commands in vs code editor
+
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.7/manifests/install.yaml
+
+wait for sometime till the namespace gets created.
+The above command will create a namespace with "argocd" name
+
+By default the argo CD server is not publicly exposed, so we need to expose it publicly. To do that, execute the below command;
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+
+(OR) Command Prompt Execution
+kubectl patch svc argocd-server -n argocd -p "{\"spec\": {\"type\": \"LoadBalancer\"}}"
+
+After successful execution you should see "patched"
+
+To see the namespace got created or not ----> kubectl get ns ----> you will see argocd namespace
+To see the pods available in the argocd namespace ----> kubectl get pods -n argocd ----> you will see the pods
+
+Wait for 5 minutes for the load balancer creation. Once the loadbalancer is created, we will get the load balancer url.
+
+Meanwhile execute the below commands in vs code editor
+
+------------------------------------------------------------
+15.7: Monitor Kubernetes with Prometheus
+------------------------------------------------------------
+Used to monitor Kubernetes cluster.
+Additionally, you'll install the node exporter using Helm to collect metrics from your cluster nodes.
+
+Install Node Exporter using Helm
+To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node Exporter. This component allows you to collect system-level metrics from your cluster nodes. Here are the steps to install the Node Exporter using Helm:
+
+Add the Prometheus Community Helm repository:
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+Create a Kubernetes namespace for the Node Exporter:
+kubectl create namespace prometheus-node-exporter
+
+Install the Node Exporter using Helm:
+helm install prometheus-node-exporter prometheus-community/prometheus-node-exporter --namespace prometheus-node-exporter
+
+Lets continue with load balancer thing of previous step; execute the below in VS code editor
+export ARGOCD_SERVER=`kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname'`
+
+Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+$env:ARGOCD_SERVER = $(kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname')
+
+
+(Ref URL: https://archive.eksworkshop.com/intermediate/290_argocd/configure/)
+
+To get the loadbalancer url;
+echo $ARGOCD_SERVER
+
+Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+echo $env:ARGOCD_SERVER
+
+You will see the load balancer url, copy it and paste in browser. You will see the ArgoCD Homepage.
+Username is "admin"
+To get the password, execute the below command in vs code editor;
+export ARGO_PWD=`kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d`
+
+Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+$env:ARGO_PWD = (kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | % { [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($_)) })
+
+To see the password;
+echo $ARGO_PWD
+
+Execute the below command in powershell, if the command doesn't get executed in VS Code Editor
+echo $env:ARGO_PWD
+
+You will see the password. copy and paste it in the argo cd homepage --->login
+
+<Follow the process as explained in the video>
+
+Note: In the repo, in Kubernetes folder, in the deployment.yml file, in the containers section change the dockerhub username
+
+Add a Job to Scrape Metrics on nodeip:9001/metrics in prometheus.yml:
+
+Update your Prometheus configuration (prometheus.yml) to add a new job for scraping metrics from nodeip:9001/metrics. You can do this by adding the following configuration to your prometheus.yml file:
+Go to the monitoring server tab in Moba and execute the below commands;
+sudo vi /etc/prometheus/prometheus.yml ----> Paste the below commands at the bottom of screen ----> 
+  - job_name: 'k8s'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['nodeIP:9100']
+
+In the above, to get the "nodeIP", goto EKS in AWS ----> Click on EKS Cluster ----> "Compute" tab ----> Nodes ----> Click on any one node ----> Click on the "instance id" ----> Copy the public ip ----> Paste in the above script
+
+The static_configs section specifies the targets to scrape metrics from, and in this case, it's set to nodeip:9001.
+
+----> esc ----> :wq ----> promtool check config /etc/prometheus/prometheus.yml ----> You should see "Success" ----> Check the validity of the configuration file ----> promtool check config /etc/prometheus/prometheus.yml ----> curl -X POST http://localhost:9090/-/reload
+
+Goto Prometheus and reload. Goto ArgoCD and reload to see whether the pipeline is done or not
+
+Copy the public ip of "nodeIP" which we have done exactly 4 steps above this line ---> Goto browser and paste it:30001 ----> Make sure to open the port 30001 for the "nodeIP:" VM ----> You will see the application
+
+Note: If you see error in Prometheus under "k8s", open port number 9100 for the EC2 instances which were created as part of EKS cluster i.e nodes
 
 
 

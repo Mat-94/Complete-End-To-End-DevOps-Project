@@ -1,4 +1,20 @@
 Seamless Deployment and Monitoring of a Zomato-Inspired Application using Jenkins, Docker, SonarQube, and Kubernetes on AWS
+
+Tools & Services Used:
+GitHub GitHub
+Jenkins Jenkins
+SonarQube SonarQube
+Docker Docker
+Kubernetes Kubernetes
+Prometheus Prometheus
+Grafana Grafana
+ArgoCD ArgoCD
+OWASP OWASP
+Trivy Trivy
+Project Stages:
+Stage 1 - Deployment of App to Docker Container
+Stage 2 - Deployment of App to K8S Cluster with Monitoring
+
 Introduction: 
 In today’s fast-paced software development landscape, automating deployment and ensuring seamless application monitoring are critical for maintaining efficiency and reliability. This project demonstrates a comprehensive DevOps CI/CD pipeline for deploying a Zomato-inspired web application using industry-standard tools and technologies.
 The deployment workflow integrates Jenkins for continuous integration and delivery, Docker for containerization, SonarQube for static code analysis, and Kubernetes (via Amazon EKS) for scalable orchestration. Additionally, Prometheus and Grafana are configured for robust monitoring and alerting to ensure optimal performance and availability.
